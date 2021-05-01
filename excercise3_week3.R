@@ -44,3 +44,4 @@ sabi_filter%>%
 
 
 #Task 1: Segmentation -------------
+#salüüüh
