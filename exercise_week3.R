@@ -123,6 +123,53 @@ caro_frame%>%
   coord_fixed() +
   theme(legend.position = "right")
 
+#task 4 - Segment-based analysis--------------
+
+#we need a unique ID for each segment that we can use as a grouping variable
+#function which assign unique IDs based on the column static: 
+
+vec <-10
+
+rle_id <- function(vec){
+  #Run Length Encoding - compute the lengths and values of runs equal values in a vector - lenghts: 	 an integer vector containing the length of each run
+  x <- rle(vec)$lengths 
+  as.factor(rep(seq_along(x), times=x))
+}
+
+
+#use the newly created function rle_id to assign unique IDs to subtrajectories
+
+caro_frame <- caro_frame %>%
+  mutate(segment_id = rle_id(static))
+
+
+#visualize them by coloring segment_ID (with all moving points; static == FALSE)
+
+
+caro_f <-caro_frame%>%
+  filter(static == FALSE) %>% 
+  ggplot(aes(E, N))  +
+  geom_path(aes(colour = segment_id)) +
+  geom_point(aes(colour = segment_id)) +
+  coord_fixed() +
+  theme(legend.position = "none")
+
+caro_f
+
+#removed all segments n < 5
+
+caro_seg <- caro_frame %>% 
+  group_by(segment_id) %>% 
+  mutate(id_amount = n()) %>% 
+  filter(static == FALSE) %>%
+  filter(id_amount >= 6) %>% 
+  ggplot(aes(E, N))  +
+  geom_path(aes(colour = segment_id)) +
+  geom_point(aes(colour = segment_id)) +
+  coord_fixed() +
+  theme(legend.position = "none")
+
+caro_seg
 
 
 
