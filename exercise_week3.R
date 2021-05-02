@@ -171,6 +171,30 @@ caro_seg <- caro_frame %>%
 
 caro_seg
 
+#Task 5: Similarity measures-----------
 
+pede = read.delim("pedestrian.csv",sep=",",dec=".",header=TRUE)
+#Data cleansing
+#set timezone
+pede$DatetimeUTC <- as.POSIXct(as.character(pede$DatetimeUTC), format = "%Y-%m-%dT%H:%M:%SZ",tz = "UTC")
+is.data.frame(pede)
 
+ggplot(data=pede)+
+  geom_path(aes(E,N))+
+  geom_point(aes(E,N))+
+  facet_wrap(~TrajID)+
+  labs(title = "Visual Comparison of the 6 trajectories",
+       subtitle = "Each subplot highlights a trajectory",
+       caption = "Data source: pedestrian.csv")
 
+#do musi no farbe ändere ond alli date im hentergrond als graui pönkt
+
+#Task 6 Calculate similarity
+
+library("SimilarityMeasures")
+help(package = "SimilarityMeasures")
+#https://cran.r-project.org/web/packages/SimilarityMeasures/SimilarityMeasures.pdf
+
+pede2 <- pede %>% 
+  group_by(TrajID) %>% 
+DTW(1, 2, pointSpacing=-1)
