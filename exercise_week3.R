@@ -113,4 +113,17 @@ caro_frame <- caro_frame %>%
   ungroup() %>%
   mutate(static = stepMean < mean(stepMean, na.rm = TRUE))
 
+#task 3- Visualize segmented trajectories
+
+
+caro_frame%>%
+  ggplot(aes(E, N))  +
+  geom_path() +
+  geom_point(aes(colour = static)) +
+  coord_fixed() +
+  theme(legend.position = "right")
+
+
+
+
 
