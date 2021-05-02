@@ -54,7 +54,7 @@ sabi <- sabi %>%
   ) %>%
   ungroup() 
 
-#Step c): Remove “static points”
+#Step c): Remove all static points 
 sabi <- sabi %>% 
   ungroup() %>%
   mutate(static = stepMean < mean(stepMean, na.rm = TRUE))
@@ -88,3 +88,29 @@ caro_frame <- caro %>%
     nPlus2  = sqrt((E-lead(E,2))^2+(N-lead(N,2))^2),  # distance to pos +2 minutes
     nPlus3 = sqrt((E-lead(E,3))^2+(N-lead(N,3))^2),   # distance to pos -3 minutes
   )
+
+#task 2
+
+caro_frame <- caro_frame %>%
+  rowwise() %>%
+  mutate(
+    stepMean = mean(c(nMinus3,nMinus2, nMinus1,nPlus1,nPlus2,nPlus3))) %>%
+  ungroup()
+#create boxplot 
+ggplot(caro_frame)+
+  geom_boxplot(mapping = aes(,stepMean, na.rm= TRUE))
+
+#create histogramm
+ggplot(caro_frame)+
+  geom_histogram(mapping = aes(stepMean, na.rm= TRUE))
+
+#choose a threshold between stops and moves --> depending on data and question!
+#In this exercise, we use the mean of all stepMean values:
+
+#Step c): Remove all static points (= stops)
+#all points which are bigger than the mean of stepMean are defined as static (moving)
+caro_frame <- caro_frame %>% 
+  ungroup() %>%
+  mutate(static = stepMean < mean(stepMean, na.rm = TRUE))
+
+
