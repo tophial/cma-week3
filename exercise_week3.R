@@ -120,15 +120,17 @@ caro_frame%>%
   ggplot(aes(E, N))  +
   geom_path() +
   geom_point(aes(colour = static)) +
-  coord_fixed() +
-  theme(legend.position = "right")
+  theme(legend.position = "right")+
+  coord_flip() # E und N sind aber vertauscht!! --andere datenbank?
+
+
 
 #task 4 - Segment-based analysis--------------
 
 #we need a unique ID for each segment that we can use as a grouping variable
 #function which assign unique IDs based on the column static: 
 
-vec <-10
+
 
 rle_id <- function(vec){
   #Run Length Encoding - compute the lengths and values of runs equal values in a vector - lenghts: 	 an integer vector containing the length of each run
@@ -158,16 +160,21 @@ caro_f
 
 #removed all segments n < 5
 
+
+
 caro_seg <- caro_frame %>% 
   group_by(segment_id) %>% 
-  mutate(id_amount = n()) %>% 
+  mutate(
+    duration = as.integer(difftime(max(DatetimeUTC),min(DatetimeUTC),"mins"))
+  ) %>% 
   filter(static == FALSE) %>%
-  filter(id_amount >= 6) %>% 
+  filter(duration >= 5) %>% 
   ggplot(aes(E, N))  +
   geom_path(aes(colour = segment_id)) +
   geom_point(aes(colour = segment_id)) +
   coord_fixed() +
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  coord_flip()
 
 caro_seg
 
@@ -179,15 +186,34 @@ pede = read.delim("pedestrian.csv",sep=",",dec=".",header=TRUE)
 pede$DatetimeUTC <- as.POSIXct(as.character(pede$DatetimeUTC), format = "%Y-%m-%dT%H:%M:%SZ",tz = "UTC")
 is.data.frame(pede)
 
-ggplot(data=pede)+
-  geom_path(aes(E,N))+
-  geom_point(aes(E,N))+
-  facet_wrap(~TrajID)+
+#first trial
+ggplot(data=pede, aes(E,N))+
+  geom_point(aes(alpha=TrajID))+
+  geom_point(aes(colour=as.factor(TrajID)))+
+    facet_wrap(~TrajID, labeller = labeller(TrajID = 
+                                            c("1" = "TrajID: 1",
+                                              "2" = "TrajID: 2",
+                                              "3" = "TrajID: 3",
+                                              "4" = "TrajID: 4",
+                                              "5" = "TrajID: 5",
+                                              "6" = "TrajID: 6")))+
   labs(title = "Visual Comparison of the 6 trajectories",
        subtitle = "Each subplot highlights a trajectory",
-       caption = "Data source: pedestrian.csv")
+       caption = "Data source: pedestrian.csv")+
+  theme(legend.position = "none")
+#now plot with geom_point with all trajectories in background with alpha 0.1
+ggplot(pede, aes(E,N)) +                                                                                   
+  geom_point(data = dplyr::select(pede, -TrajID),alpha = 0.1) +                                      
+  geom_point(aes(color = as.factor(TrajID)), size = 1) +                                                   
+  geom_path(aes(color = as.factor(TrajID))) +                                                               
+  facet_wrap(~TrajID,labeller = label_both) +                                                               
+  coord_equal() +                                                                                           
+  theme_minimal() +                                                                                         
+  labs(title = "Visual Comparison of the 6 trajectories",
+      subtitle = "Each subplot highlights a trajectory",
+      caption = "Data source: pedestrian.csv")+
+  theme(legend.position = "none")
 
-#do musi no farbe ändere ond alli date im hentergrond als graui pönkt
 
 #Task 6 Calculate similarity
 
@@ -195,6 +221,5 @@ library("SimilarityMeasures")
 help(package = "SimilarityMeasures")
 #https://cran.r-project.org/web/packages/SimilarityMeasures/SimilarityMeasures.pdf
 
-pede2 <- pede %>% 
-  group_by(TrajID) %>% 
-DTW(1, 2, pointSpacing=-1)
+
+
