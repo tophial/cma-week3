@@ -13,7 +13,7 @@ library(lubridate)    # To handle dates and times
 library(tidyr)
 ## Import the downloaded csv ##################################################
 
-wildschwein_BE <- read_delim("wildschwein_BE_2056.csv",",") # adjust path
+wildschwein_BE <- read_delim("wildschwein_BE.csv",",") # adjust path
 #setting remove = FALSE preserves the original (E/N) column:
 wildschwein_BE <- st_as_sf(wildschwein_BE, coords = c("E", "N"), crs = 2056, remove = FALSE)
 
@@ -120,8 +120,7 @@ caro_frame%>%
   ggplot(aes(E, N))  +
   geom_path() +
   geom_point(aes(colour = static)) +
-  theme(legend.position = "right")+
-  coord_flip() # E und N sind aber vertauscht!! --andere datenbank?
+  theme(legend.position = "right")
 
 
 
@@ -173,8 +172,7 @@ caro_seg <- caro_frame %>%
   geom_path(aes(colour = segment_id)) +
   geom_point(aes(colour = segment_id)) +
   coord_fixed() +
-  theme(legend.position = "none")+
-  coord_flip()
+  theme(legend.position = "none")
 
 caro_seg
 
@@ -220,6 +218,75 @@ ggplot(pede, aes(E,N)) +
 library("SimilarityMeasures")
 help(package = "SimilarityMeasures")
 #https://cran.r-project.org/web/packages/SimilarityMeasures/SimilarityMeasures.pdf
+#Attention: All functions in the package need matrices as input, with one trajectory per matrix.
+
+#DTW-----------
+
+#first make matrix for each traj 1-6 
+
+matrix_traj <- function(traj_ID){
+  pede_filtered <- pede%>% 
+    filter(TrajID ==traj_ID) %>% 
+    dplyr::select(E,N)
+  
+  pede_filtered_matrix <-as.matrix(pede_filtered)
+  return(pede_filtered_matrix)
+}
+
+#leerer Container bzw. leere Liste erstellen, welche in For-loop gefüllt wird
+traj_vec <- list()
+
+
+for (val in c(1:6)){
+  traj_vec[[val]]<- matrix_traj(val) #doppel Eckklammer, da 2 spalten
+  
+}
+traj_vec
+
+
+#function to compare traj1 with traj2-6
+
+similarities_fun <- function (traj_a, traj_b){
+  dynamic_time_wraping_f <- DTW(traj_a, traj_b, pointSpacing=-1) 
+  edit_distance_f <- EditDist(traj_a, traj_b, pointDistance=20)
+  frechet_f <- Frechet(traj_a, traj_b, testLeash=-1)
+  #The accuracy of the algorithm (pointSpacing = ,pointDistance = and errorMarg =) can be varied to provide faster calculations. Please see Vlachos, Gunopoulos, and Kollios (2002) for more information.
+  LCSS_f <- LCSS(traj_a, traj_b, pointSpacing=-1, pointDistance=100,errorMarg=2, returnTrans=FALSE)
+  return(list(dynamic_time_wraping_f, edit_distance_f, frechet_f))
+}
+
+#leerer Container erstellen 
+
+similar_list <- list()
+
+#vergleiche alle trajectories mit 1. trajectory
+
+for (val in c(1:6)){
+  similar_list[[val]]<-similarities_fun(traj_vec[[1]], traj_vec[[val]])
+}
+
+
+#create data.frame from list
+
+df <- data.frame(num=unlist(similar_list))
+
+vec_names <- c(rep("DTW", 6), rep("ED", 6), rep("Fr", 6), rep("LCSS", 6))
+vec_ID <-c(rep(c(1:6),4))
+
+df <-cbind(df, vec_names)
+df <-cbind(df, vec_ID )
+
+
+# plot of similarity values
+
+  ggplot(data=df, aes(vec_ID,num)) +
+  geom_col(aes(fill = as.factor(vec_ID)))+
+  theme(legend.position = "none")+
+  facet_wrap(~vec_names, nrow = 2, scales = "free")
+  
+  
+
+
 
 
 
